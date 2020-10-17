@@ -15,7 +15,9 @@ def write_xls(lst):
             value = str(j)
             cell = sheet.cell(row=i + 1, column=(lst[i].index(j)) + 1)
             cell.value = value
-    wb.save('C:\\Users\\YumagulovA\\Desktop\\ozon\\example.xlsx')
+    wb.save('/home/zico/Desktop/example.xlsx')
 
 
-write_xls(lst)
+# write_xls(lst)
+
+
