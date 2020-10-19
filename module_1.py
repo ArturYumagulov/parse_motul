@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup as bs
 
 
-def write_xls(lst):
+def write_xls(lst, path):
     wb = openpyxl.Workbook()
     wb.create_sheet(title="Лист", index=0)
     sheet = wb["Лист"]
@@ -12,7 +12,7 @@ def write_xls(lst):
             value = str(j)
             cell = sheet.cell(row=i + 1, column=(lst[i].index(j)) + 1)
             cell.value = value
-    wb.save('/home/zico/Desktop/example.xlsx')
+    wb.save(path)
 
 
 def excel_reader(file_obj):
@@ -26,21 +26,28 @@ def excel_reader(file_obj):
 
 def get_link(url):
     r = requests.get(url)
+    price = None
+    vendor_code = None
     if r.status_code == 200:
         soup = bs(r.text, "html.parser")
         divs = soup.find_all('div', attrs={"class": "catalog_content_products-item"})
         for div in divs:
+            # print(div)
             types = div.find('span', attrs={'class': 'catalog_content_products-category'}).text
             if types in ["Моторные масла Motul", "Трансмиссионные масла Motul", "Моторные масла 300V Motul"]:
                 product = div.find('img', attrs={"class": 'catalog_content_products-img'})
                 litres = div.find('span', attrs={'class': 'catalog-card-capacity__liter active-liter'})
+                name = div.find('div', attrs={'class': 'catalog_content_products-text'}).text.replace("   ", '').\
+                                                                                            replace('\n', '')
                 if "Трансмиссионные масла" in types:
-                    types = "Автохимия.Трансмиссионное"
+                    types = "Автохимия. Трансмиссионное, гидравлическое масла"
+                    name = "Трансмиссионное масло Motul" + name[28:-6]
                 elif "Моторные масла" in types:
                     types = "Автохимия. Масло моторное"
+                    name = "Моторное масла Motul" + name[21:-6]
                 if litres is not None:
                     price = litres.get('data-price')
-                    articul = litres.get('data-articul')
+                    vendor_code = litres.get('data-articul')
                 image = product.get("src")
                 weight = 0
                 length = 0
@@ -69,9 +76,7 @@ def get_link(url):
                     image_list = (image.split('/'))
                     correct_url = f"https://motul.store/{image_list[1]}/{image_list[2]}/{image_list[3]}/{image_list[4]}/" \
                                   f"700_700_1/{image_list[-1]}"
-                    print([articul, int(price.replace(" руб.", "").replace(' ', '')), types, litres, weight,
-                            length, height, correct_url])
-                    return [articul, int(price.replace(" руб.", "").replace(' ', '')), types, litres, weight,
+                    return [vendor_code, name, int(price.replace(" руб.", "").replace(' ', '')), types, litres, weight,
                             length, height, correct_url]
                 else:
                     return None
@@ -81,18 +86,6 @@ def get_link(url):
         print(r.status_code)
 
 
-count = 1
-lst = []
-xls_path = "/home/zico/Desktop/motul.xlsx"
-with open("/home/zico/Desktop/file.txt", 'a') as f:
-    for i in excel_reader(xls_path):
-        correct_link = get_link(f"https://motul.store/search/?q={i}")
-        if correct_link is not None:
-            lst.append(correct_link)
-
-
-
-# x = get_link(f"https://motul.store/search/?q={100198}")
-# print(len(x))
-# print(x)
-
+if __name__ == '__main__':
+    get_link(f"https://motul.store/search/?q={108945}")
+    #  .catalog_content_products-text > br:nth-child(2)
